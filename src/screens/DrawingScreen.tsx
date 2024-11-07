@@ -8,31 +8,33 @@ const { width, height } = Dimensions.get('window');
 
 const DrawingScreen: React.FC = () => {
   const [paths, setPaths] = useState<{ color: string; d: string }[]>([]);
-  const [currentPath, setCurrentPath] = useState<string>(''); // Renderizado en tiempo real
   const [currentColor, setCurrentColor] = useState<string>('black');
-
+  
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onPanResponderGrant: (_, gestureState) => {
-        // Comienza un nuevo camino en la posición inicial
-        const x = gestureState.x0.toFixed(0);
-        const y = gestureState.y0.toFixed(0);
-        setCurrentPath(`M${x},${y}`);
-      },
-      onPanResponderMove: (_, gestureState) => {
-        const x = gestureState.moveX.toFixed(0);
-        const y = gestureState.moveY.toFixed(0);
-        setCurrentPath((prevPath) => `${prevPath} L${x},${y}`);
-      },
-      onPanResponderRelease: () => {
-        // Guardar el camino final en `paths`
+        const x = gestureState.x0.toFixed(3);
+        const y = gestureState.y0.toFixed(3);
         setPaths((prevPaths) => [
           ...prevPaths,
-          { color: currentColor, d: currentPath },
+          { color: currentColor, d: `M${x},${y}` }
         ]);
-        setCurrentPath(''); // Limpiar el trazo temporal
       },
+      onPanResponderMove: (_, gestureState) => {
+        const x = gestureState.moveX.toFixed(3);
+        const y = gestureState.moveY.toFixed(3);
+        setPaths((prevPaths) => {
+          const newPaths = [...prevPaths];
+          const lastPath = newPaths.pop();
+          if (lastPath) {
+            lastPath.d += ` L${x},${y}`;
+            newPaths.push(lastPath);
+          }
+          return newPaths;
+        });
+      },
+      onPanResponderRelease: () => {},
     })
   ).current;
 
@@ -52,12 +54,8 @@ const DrawingScreen: React.FC = () => {
             fill="none"
           />
         ))}
-        {/* Dibuja el trazo en curso sin actualizar el estado principal */}
-        {currentPath ? (
-          <Path d={currentPath} stroke={currentColor} strokeWidth={3} fill="none" />
-        ) : null}
       </Svg>
-      <Toolbar onClear={handleClear} onColorChange={handleColorChange} />
+      <Toolbar onClear={handleClear} onColorChange={handleColorChange} selectedColor={currentColor} />
     </View>
   );
 };
