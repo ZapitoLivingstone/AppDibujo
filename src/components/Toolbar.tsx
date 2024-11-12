@@ -1,110 +1,66 @@
 // src/components/Toolbar.tsx
 import React, { useState } from 'react';
-import { View, Button, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Button, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 interface ToolbarProps {
   onClear: () => void;
   onColorChange: (color: string) => void;
-  selectedColor: string;
+  onBrushSizeChange: (size: number) => void;
+  onBrushTypeChange: (type: 'round' | 'square' | 'butt') => void;
 }
 
-const Toolbar: React.FC<ToolbarProps> = ({ onClear, onColorChange, selectedColor }) => {
-  const [expanded, setExpanded] = useState(false);
-  const translateY = useState(new Animated.Value(0))[0];
-
-  const toggleToolbar = () => {
-    Animated.timing(translateY, {
-      toValue: expanded ? 0 : -80,
-      duration: 300,
-      useNativeDriver: true,
-    }).start();
-    setExpanded(!expanded);
-  };
+const Toolbar: React.FC<ToolbarProps> = ({ onClear, onColorChange, onBrushSizeChange, onBrushTypeChange }) => {
+  const [isVisible, setIsVisible] = useState(false);
 
   return (
-    <Animated.View style={[styles.container, { transform: [{ translateY }] }]}>
-      <View style={[styles.toolbar, !expanded && styles.collapsedToolbar]}>
-        {expanded && (
-          <>
-            <Button title="Clear" onPress={onClear} />
-            <View style={styles.colorButtons}>
-              <TouchableOpacity
-                style={[styles.colorButton, selectedColor === 'black' && styles.selectedColorButton]}
-                onPress={() => onColorChange('black')}
-              >
-                <View style={[styles.colorSwatch, { backgroundColor: 'black' }]} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.colorButton, selectedColor === 'red' && styles.selectedColorButton]}
-                onPress={() => onColorChange('red')}
-              >
-                <View style={[styles.colorSwatch, { backgroundColor: 'red' }]} />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.colorButton, selectedColor === 'blue' && styles.selectedColorButton]}
-                onPress={() => onColorChange('blue')}
-              >
-                <View style={[styles.colorSwatch, { backgroundColor: 'blue' }]} />
-              </TouchableOpacity>
-            </View>
-          </>
-        )}
-      </View>
-      <TouchableOpacity onPress={toggleToolbar} style={styles.handle}>
-        <View style={styles.handleIcon} />
+    <View style={styles.toolbarContainer}>
+      <TouchableOpacity onPress={() => setIsVisible(!isVisible)}>
+        <Text style={styles.toggleButton}>{isVisible ? 'Hide Toolbar' : 'Show Toolbar'}</Text>
       </TouchableOpacity>
-    </Animated.View>
+      {isVisible && (
+        <View style={styles.container}>
+          <Button title="Clear" onPress={onClear} />
+          
+          <Text style={styles.label}>Color:</Text>
+          <Button title="Red" onPress={() => onColorChange('red')} />
+          <Button title="Blue" onPress={() => onColorChange('blue')} />
+
+          <Text style={styles.label}>Brush Size:</Text>
+          <Button title="Small" onPress={() => onBrushSizeChange(2)} />
+          <Button title="Medium" onPress={() => onBrushSizeChange(5)} />
+
+          <Text style={styles.label}>Brush Type:</Text>
+          <Button title="Round" onPress={() => onBrushTypeChange('round')} />
+          <Button title="Square" onPress={() => onBrushTypeChange('square')} />
+          <Button title="Butt" onPress={() => onBrushTypeChange('butt')} />
+        </View>
+      )}
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
+  toolbarContainer: {
+    padding: 10,
+  },
+  toggleButton: {
+    fontSize: 16,
+    color: '#007BFF',
+    textAlign: 'center',
+    marginBottom: 10,
+  },
   container: {
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    alignItems: 'center',
-  },
-  toolbar: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-around',
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    paddingVertical: 10,
-    width: '100%',
+    padding: 10,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 5,
   },
-  colorButtons: {
-    flexDirection: 'row',
-  },
-  colorButton: {
-    marginHorizontal: 8,
-    padding: 4,
-    borderRadius: 4,
-  },
-  selectedColorButton: {
-    backgroundColor: 'rgba(0, 0, 0, 0.2)',
-  },
-  colorSwatch: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-  },
-  handle: {
-    width: '100%',
-    height: 40,
-    backgroundColor: '#ccc',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    borderTopColor: '#999',
-  },
-  handleIcon: {
-    width: 30,
-    height: 4,
-    backgroundColor: '#666',
-    borderRadius: 2,
-  },
-  collapsedToolbar: {
-    height: 0,
-    overflow: 'hidden',
+  label: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginVertical: 5,
   },
 });
 

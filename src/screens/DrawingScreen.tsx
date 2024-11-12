@@ -6,41 +6,46 @@ import Toolbar from '../components/Toolbar';
 
 const { width, height } = Dimensions.get('window');
 
+type PathType = {
+  color: string;
+  strokeWidth: number;
+  brushType: 'round' | 'square' | 'butt'; 
+  d: string;
+};
+
 const DrawingScreen: React.FC = () => {
-  const [paths, setPaths] = useState<{ color: string; d: string }[]>([]);
+  const [paths, setPaths] = useState<PathType[]>([]);
   const [currentColor, setCurrentColor] = useState<string>('black');
-  
+  const [brushSize, setBrushSize] = useState<number>(3);
+  const [brushType, setBrushType] = useState<'round' | 'square' | 'butt'>('round'); // Ajuste a 'butt'
+  const [currentPath, setCurrentPath] = useState<string>('');
+
   const panResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => true,
       onPanResponderGrant: (_, gestureState) => {
-        const x = gestureState.x0.toFixed(3);
-        const y = gestureState.y0.toFixed(3);
-        setPaths((prevPaths) => [
-          ...prevPaths,
-          { color: currentColor, d: `M${x},${y}` }
-        ]);
+        const x = gestureState.x0.toFixed(2);
+        const y = gestureState.y0.toFixed(2);
+        setCurrentPath(`M${x},${y}`);
       },
       onPanResponderMove: (_, gestureState) => {
-        const x = gestureState.moveX.toFixed(3);
-        const y = gestureState.moveY.toFixed(3);
-        setPaths((prevPaths) => {
-          const newPaths = [...prevPaths];
-          const lastPath = newPaths.pop();
-          if (lastPath) {
-            lastPath.d += ` L${x},${y}`;
-            newPaths.push(lastPath);
-          }
-          return newPaths;
-        });
+        const x = gestureState.moveX.toFixed(2);
+        const y = gestureState.moveY.toFixed(2);
+        setCurrentPath((prevPath) => `${prevPath} L${x},${y}`);
       },
-      onPanResponderRelease: () => {},
+      onPanResponderRelease: () => {
+        if (currentPath) {
+          setPaths((prevPaths) => [
+            ...prevPaths,
+            { color: currentColor, strokeWidth: brushSize, brushType, d: currentPath },
+          ]);
+          setCurrentPath('');
+        }
+      },
     })
   ).current;
 
   const handleClear = () => setPaths([]);
-
-  const handleColorChange = (color: string) => setCurrentColor(color);
 
   return (
     <View style={styles.container}>
@@ -50,12 +55,27 @@ const DrawingScreen: React.FC = () => {
             key={index}
             d={path.d}
             stroke={path.color}
-            strokeWidth={3}
+            strokeWidth={path.strokeWidth}
+            strokeLinecap={path.brushType} 
             fill="none"
           />
         ))}
+        {currentPath && (
+          <Path
+            d={currentPath}
+            stroke={currentColor}
+            strokeWidth={brushSize}
+            strokeLinecap={brushType} 
+            fill="none"
+          />
+        )}
       </Svg>
-      <Toolbar onClear={handleClear} onColorChange={handleColorChange} selectedColor={currentColor} />
+      <Toolbar
+        onClear={handleClear}
+        onColorChange={setCurrentColor}
+        onBrushSizeChange={setBrushSize}
+        onBrushTypeChange={setBrushType}
+      />
     </View>
   );
 };
